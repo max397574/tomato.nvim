@@ -1,2 +1,2 @@
 # lycopersicum.nvim
-## A smart pomodoro plugin
+### A smart pomodoro plugin
