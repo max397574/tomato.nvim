@@ -10,9 +10,21 @@ local db_table = tbl("db_table", {
     log = "luatable",
 }, db)
 
-local tomato_db = {}
+local name = vim.fn.stdpath("data") .. package.config:sub(1, 1) .. "tomato_nvim_first_use"
+local f = io.open(name, "r")
+if f ~= nil then
+    io.close(f)
+else
+    db_table.timer = { started = nil, status = nil, topic = nil }
+    db_table.log = { log = {} }
+    f = io.open(name, "w+")
+    io.close(f)
+end
+
 -- db_table.timer = { started = nil, status = nil, topic = nil }
 -- db_table.log = { log = {} }
+
+local tomato_db = {}
 
 function tomato_db.set_start_time(time)
     db_table.timer.started = time
