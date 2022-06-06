@@ -89,6 +89,7 @@ start_timer = function(time_arg, seconds, new_timer)
     db.set_topic(pomo_topic)
     timer_running = true
     local time = config.time_work
+    -- TODO: save this to db
     if time_arg then
         time = time_arg
     else
@@ -125,6 +126,7 @@ local function enter_vim()
     --- Time to do in seconds
     local time_to_do
     if timer_status == "work" then
+        -- TODO: make this better, could have been started with custom time
         time_to_do = config.time_work * 60 - passed_time
     elseif timer_status == "stopped" then
         return
@@ -214,6 +216,7 @@ function tomato.get_log(today)
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     local width = vim.api.nvim_win_get_width(0)
     local height = vim.api.nvim_win_get_height(0)
+    ---@diagnostic disable-next-line: unused-local
     local win = vim.api.nvim_open_win(buf, true, {
         relative = "win",
         win = 0,
@@ -221,10 +224,9 @@ function tomato.get_log(today)
         height = math.floor(height * 0.9),
         col = math.floor(width * 0.05),
         row = math.floor(height * 0.05),
-        border = "single",
+        border = "rounded",
         style = "minimal",
     })
-    vim.api.nvim_win_set_option(win, "winblend", 20)
     vim.api.nvim_buf_set_option(buf, "modifiable", false)
     return pretty_log
 end
