@@ -1,70 +1,74 @@
-local sql = require("sqlite.db")
-
-local tbl = require("sqlite.tbl")
-local db = sql:open(vim.fn.stdpath("data") .. "/databases/tomato.db") -- open in memory
-local db_table = tbl("db_table", {
-    key = { "text", primary = true, required = true, default = "none" },
-    started = "number",
-    status = "text",
-    topic = "text",
-    log = "luatable",
-}, db)
-
-local name = vim.fn.stdpath("data") .. package.config:sub(1, 1) .. "tomato_nvim_first_use"
-local f = io.open(name, "r")
-if f ~= nil then
-    io.close(f)
-else
-    db_table.timer = { started = nil, status = nil, topic = nil }
-    db_table.log = { log = {} }
-    f = io.open(name, "w+")
-    io.close(f)
-end
-
--- db_table.timer = { started = nil, status = nil, topic = nil }
--- db_table.log = { log = {} }
-
 local tomato_db = {}
 
+tomato_db.file = vim.fn.stdpath("data")
+    .. package.config:sub(1, 1)
+    .. "tomato.mpack"
+
+tomato_db.data = {
+    started = 0,
+    status = "",
+    topic = "",
+    log = {},
+}
+
+function tomato_db.sync_dec()
+    local file = io.open(tomato_db.file, "r")
+    if not file then
+        return
+    end
+    local content = file:read("*a")
+    io.close(file)
+    tomato_db.data = vim.mpack.decode(content)
+end
+
+function tomato_db.flush()
+    local file = io.open(tomato_db.file, "w")
+    if not file then
+        return
+    end
+    file:write(vim.mpack.encode(tomato_db.data))
+    io.close(file)
+end
+
 function tomato_db.set_start_time(time)
-    db_table.timer.started = time
+    tomato_db.data.started = time
 end
 
 function tomato_db.set_timer_status(status)
-    db_table.timer.status = status
+    tomato_db.data.status = status
 end
 
 function tomato_db.get_timer_status()
-    return db_table.timer.status
+    return tomato_db.data.status
 end
 
 function tomato_db.get_start_time()
-    return db_table.timer.started
+    return tomato_db.data.started
 end
 
 function tomato_db.set_topic(topic)
-    db_table.timer.topic = topic
+    tomato_db.data.topic = topic
 end
 
 function tomato_db.get_topic()
-    return db_table.timer.topic
+    return tomato_db.data.topic
 end
 
 function tomato_db.update_log(timer)
     local date = os.date("*t")
     local date_string = date.year .. "-" .. date.month .. "-" .. date.day
-    local log = db_table.log.log
-    if not db_table.log.log[date_string] then
+    local log = tomato_db.data.log
+    if not tomato_db.data.log[date_string] then
         log[date_string] = {}
-        db_table.log.log = log
+        tomato_db.data.log = log
     end
-    local log_tbl = db_table.log.log
+    local log_tbl = tomato_db.data.log
     table.insert(log_tbl[date_string], timer)
-    db_table.log = { log = log_tbl }
+    tomato_db.data.log = log_tbl
 end
 
 function tomato_db.get_log()
-    return db_table.log.log
+    return tomato_db.data.log
 end
 
 return tomato_db
