@@ -8,7 +8,9 @@ tomato_db.data = {
     started = 0,
     status = "",
     topic = "",
+    duration = 0,
     log = {},
+    pomodoro_count = 0,
 }
 
 function tomato_db.sync_dec()
@@ -28,6 +30,22 @@ function tomato_db.flush()
     end
     file:write(vim.mpack.encode(tomato_db.data))
     io.close(file)
+end
+
+function tomato_db.set_duration(duration)
+    tomato_db.data.duration = duration
+end
+
+function tomato_db.get_duration()
+    return tomato_db.data.duration
+end
+
+function tomato_db.set_pomodoro_count(count)
+    tomato_db.data.pomodoro_count = count
+end
+
+function tomato_db.get_pomodoro_count()
+    return tomato_db.data.pomodoro_count
 end
 
 function tomato_db.set_start_time(time)
