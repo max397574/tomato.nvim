@@ -4,13 +4,15 @@ local db = require("tomato.db")
 
 local config = {
     -- time in minutes for work
-    time_work = 0.2,
+    time_work = 25,
     -- time in minutes for short break
-    time_break_short = 0.1,
+    time_break_short = 5,
     -- time in minutes for big break
-    time_break_long = 0.4,
+    time_break_long = 30,
     -- amount of pomodoros until big break
     pomodoros_big_break = 4,
+    -- function to execute when timer is over
+    hook = function() end,
 }
 local loaded_tomato = false
 
@@ -29,6 +31,7 @@ local function start_break(long)
         time = config.time_break_short
     end
     vim.loop.timer_start(uv_timer, time * 1000 * 60, 0, function()
+        db.set_duration(time / 60)
         timer_running = false
         vim.schedule(function()
             vim.ui.select(
@@ -38,6 +41,7 @@ local function start_break(long)
                     if idx == 1 then
                         start_timer(false, false, true)
                     elseif idx == 2 then
+                        db.set_pomodoro_count(0)
                         return
                     end
                 end
@@ -54,13 +58,20 @@ local function timer_ended()
         { prompt = "Pomodoro is finished. What to do?" },
         function(_, idx)
             if idx == 1 then
-                start_break()
+                db.set_pomodoro_count(db.get_pomodoro_count() + 1)
+                if db.get_pomodoro_count() % 4 == 0 then
+                    start_break(true)
+                else
+                    start_break()
+                end
             elseif idx == 2 then
+                db.set_pomodoro_count(0)
                 return
             end
         end
     )
     local topic = db.get_topic()
+    config.hook()
     db.update_log({
         start_time = db.get_start_time(),
         end_time = os.time(),
@@ -83,19 +94,20 @@ start_timer = function(time_arg, seconds, new_timer)
         pomo_topic = db.get_topic()
     end
     if timer_running then
+        -- TODO: do sth
         return
     end
     db.set_start_time(os.time())
     db.set_topic(pomo_topic)
     timer_running = true
     local time = config.time_work
-    -- TODO: save this to db
     if time_arg then
         time = time_arg
     else
         seconds = false
     end
     if seconds then
+        db.set_duration(time / 60)
         vim.loop.timer_start(uv_timer, time * 1000, 0, function()
             timer_running = false
             vim.schedule(function()
@@ -103,6 +115,7 @@ start_timer = function(time_arg, seconds, new_timer)
             end)
         end)
     else
+        db.set_duration(time)
         vim.loop.timer_start(uv_timer, time * 60 * 1000, 0, function()
             timer_running = false
             vim.schedule(function()
@@ -126,7 +139,6 @@ local function enter_vim()
     --- Time to do in seconds
     local time_to_do
     if timer_status == "work" then
-        -- TODO: make this better, could have been started with custom time
         time_to_do = config.time_work * 60 - passed_time
     elseif timer_status == "stopped" then
         return
@@ -134,6 +146,9 @@ local function enter_vim()
         time_to_do = config.time_break_short * 60 - passed_time
     elseif timer_status == "long_break" then
         time_to_do = config.time_break_long * 60 - passed_time
+    end
+    if db.get_duration() then
+        time_to_do = db.get_duration() - passed_time
     end
     if not time_to_do then
         return
@@ -176,7 +191,7 @@ function tomato.setup(update)
     })
 end
 
-function tomato.get_log(today)
+function tomato.show_log(today)
     local raw_log = db.get_log()
     local date = os.date("*t")
     local date_string = date.year .. "-" .. date.month .. "-" .. date.day
