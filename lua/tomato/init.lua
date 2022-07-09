@@ -2,7 +2,9 @@ local tomato = {}
 
 local db = require("tomato.db")
 
-local config = {
+local config
+
+tomato.config = {
     -- time in minutes for work
     time_work = 25,
     -- time in minutes for short break
@@ -31,7 +33,7 @@ local function start_break(long)
         time = config.time_break_short
     end
     vim.loop.timer_start(uv_timer, time * 1000 * 60, 0, function()
-        db.set_duration(time / 60)
+        db.set_duration(time * 60)
         timer_running = false
         vim.schedule(function()
             vim.ui.select(
@@ -107,7 +109,7 @@ start_timer = function(time_arg, seconds, new_timer)
         seconds = false
     end
     if seconds then
-        db.set_duration(time / 60)
+        db.set_duration(time)
         vim.loop.timer_start(uv_timer, time * 1000, 0, function()
             timer_running = false
             vim.schedule(function()
@@ -115,7 +117,7 @@ start_timer = function(time_arg, seconds, new_timer)
             end)
         end)
     else
-        db.set_duration(time)
+        db.set_duration(time * 60)
         vim.loop.timer_start(uv_timer, time * 60 * 1000, 0, function()
             timer_running = false
             vim.schedule(function()
@@ -165,7 +167,8 @@ function tomato.setup(update)
         return
     end
     loaded_tomato = true
-    config = vim.tbl_deep_extend("force", config, update or {})
+    tomato.config = vim.tbl_deep_extend("force", tomato.config, update or {})
+    config = tomato.config
     vim.api.nvim_create_autocmd("VimEnter", {
         callback = function()
             enter_vim()
