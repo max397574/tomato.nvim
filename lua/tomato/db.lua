@@ -1,10 +1,8 @@
-local tomato_db = {}
+local M = {}
 
-tomato_db.file = vim.fn.stdpath("data")
-    .. package.config:sub(1, 1)
-    .. "tomato.mpack"
+M.file = vim.fn.stdpath("data") .. package.config:sub(1, 1) .. "tomato.mpack"
 
-tomato_db.data = {
+M.data = {
     started = 0,
     status = "",
     topic = "",
@@ -13,80 +11,80 @@ tomato_db.data = {
     pomodoro_count = 0,
 }
 
-function tomato_db.sync_dec()
-    local file = io.open(tomato_db.file, "r")
+function M.sync_dec()
+    local file = io.open(M.file, "r")
     if not file then
         return
     end
     local content = file:read("*a")
     io.close(file)
-    tomato_db.data = vim.mpack.decode(content)
+    M.data = vim.mpack.decode(content)
 end
 
-function tomato_db.flush()
-    local file = io.open(tomato_db.file, "w")
+function M.flush()
+    local file = io.open(M.file, "w")
     if not file then
         return
     end
-    file:write(vim.mpack.encode(tomato_db.data))
+    file:write(vim.mpack.encode(M.data))
     io.close(file)
 end
 
-function tomato_db.set_duration(duration)
-    tomato_db.data.duration = duration
+function M.set_duration(duration)
+    M.data.duration = duration
 end
 
-function tomato_db.get_duration()
-    return tomato_db.data.duration
+function M.get_duration()
+    return M.data.duration
 end
 
-function tomato_db.set_pomodoro_count(count)
-    tomato_db.data.pomodoro_count = count
+function M.set_pomodoro_count(count)
+    M.data.pomodoro_count = count
 end
 
-function tomato_db.get_pomodoro_count()
-    return tomato_db.data.pomodoro_count
+function M.get_pomodoro_count()
+    return M.data.pomodoro_count
 end
 
-function tomato_db.set_start_time(time)
-    tomato_db.data.started = time
+function M.set_start_time(time)
+    M.data.started = time
 end
 
-function tomato_db.set_timer_status(status)
-    tomato_db.data.status = status
+function M.set_timer_status(status)
+    M.data.status = status
 end
 
-function tomato_db.get_timer_status()
-    return tomato_db.data.status
+function M.get_timer_status()
+    return M.data.status
 end
 
-function tomato_db.get_start_time()
-    return tomato_db.data.started
+function M.get_start_time()
+    return M.data.started
 end
 
-function tomato_db.set_topic(topic)
-    tomato_db.data.topic = topic
+function M.set_topic(topic)
+    M.data.topic = topic
 end
 
-function tomato_db.get_topic()
-    return tomato_db.data.topic
+function M.get_topic()
+    return M.data.topic
 end
 
-function tomato_db.update_log(timer)
+function M.update_log(timer)
     local date = os.date("*t")
     local date_string = date.year .. "-" .. date.month .. "-" .. date.day
-    local log = tomato_db.data.log
-    if not tomato_db.data.log[date_string] then
+    local log = M.data.log
+    if not M.data.log[date_string] then
         log[date_string] = {}
-        tomato_db.data.log = log
+        M.data.log = log
     end
-    local log_tbl = tomato_db.data.log
+    local log_tbl = M.data.log
     table.insert(log_tbl[date_string], timer)
-    tomato_db.data.log = log_tbl
+    M.data.log = log_tbl
 end
 
-function tomato_db.get_log()
-    return tomato_db.data.log
+function M.get_log()
+    return M.data.log
 end
 
-return tomato_db
+return M

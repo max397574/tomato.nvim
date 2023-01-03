@@ -55,23 +55,19 @@ end
 local function timer_ended()
     vim.loop.timer_stop(uv_timer)
     count = count + 1
-    vim.ui.select(
-        { "Take a break", "Quit" },
-        { prompt = "Pomodoro is finished. What to do?" },
-        function(_, idx)
-            if idx == 1 then
-                db.set_pomodoro_count(db.get_pomodoro_count() + 1)
-                if db.get_pomodoro_count() % 4 == 0 then
-                    start_break(true)
-                else
-                    start_break()
-                end
-            elseif idx == 2 then
-                db.set_pomodoro_count(0)
-                return
+    vim.ui.select({ "Take a break", "Quit" }, { prompt = "Pomodoro is finished. What to do?" }, function(_, idx)
+        if idx == 1 then
+            db.set_pomodoro_count(db.get_pomodoro_count() + 1)
+            if db.get_pomodoro_count() % 4 == 0 then
+                start_break(true)
+            else
+                start_break()
             end
+        elseif idx == 2 then
+            db.set_pomodoro_count(0)
+            return
         end
-    )
+    end)
     local topic = db.get_topic()
     config.hook()
     db.update_log({
@@ -88,10 +84,7 @@ end
 start_timer = function(time_arg, seconds, new_timer)
     local pomo_topic
     if new_timer then
-        pomo_topic = vim.fn.input(
-            "What will you do during this pomodoro > ",
-            ""
-        )
+        pomo_topic = vim.fn.input("What will you do during this pomodoro > ", "")
     else
         pomo_topic = db.get_topic()
     end
@@ -210,26 +203,14 @@ function tomato.show_log(today)
             if timer.topic then
                 table.insert(pretty_log, "  " .. timer.topic)
             end
-            table.insert(
-                pretty_log,
-                "    From: " .. start_time.hour .. ":" .. start_time.min
-            )
-            table.insert(
-                pretty_log,
-                "    To: " .. end_time.hour .. ":" .. end_time.min
-            )
+            table.insert(pretty_log, "    From: " .. start_time.hour .. ":" .. start_time.min)
+            table.insert(pretty_log, "    To: " .. end_time.hour .. ":" .. end_time.min)
             table.insert(pretty_log, "")
         end
     end
     local buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_option(buf, "bufhidden", "wipe")
-    vim.api.nvim_buf_set_keymap(
-        buf,
-        "n",
-        "q",
-        "<cmd>q<CR>",
-        { noremap = true, silent = true, nowait = true }
-    )
+    vim.api.nvim_buf_set_keymap(buf, "n", "q", "<cmd>q<CR>", { noremap = true, silent = true, nowait = true })
     local lines = pretty_log
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     local width = vim.api.nvim_win_get_width(0)
